@@ -9,4 +9,4 @@ struct Post: Codable, Sendable {
     var avatarURL: URL? {
       URL(string: "https://i.pravatar.cc/150?u=\(self.id)")
     }
-}
+}               

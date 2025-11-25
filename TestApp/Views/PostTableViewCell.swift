@@ -1,11 +1,18 @@
 import UIKit
 
+/// Кастомная ячейка поста.
+/// Отвечает за:
+///  - отображение UI
+///  - анимацию лайка
+///  - skeleton loading
+///  - защиту от багов переиспользования ячеек (currentPostId)
 final class PostTableViewCell: UITableViewCell {
 
     static let reuseId = "PostCell"
 
     // MARK: - UI
 
+    /// Контейнер с тенью — визуальное отделение карточки от фона.
     private let cardView: UIView = {
         let v = UIView()
         v.translatesAutoresizingMaskIntoConstraints = false
@@ -18,6 +25,7 @@ final class PostTableViewCell: UITableViewCell {
         return v
     }()
 
+    /// Основная аватарка пользователя.
     private let avatarImageView: UIImageView = {
         let iv = UIImageView()
         iv.translatesAutoresizingMaskIntoConstraints = false
@@ -27,6 +35,7 @@ final class PostTableViewCell: UITableViewCell {
         return iv
     }()
 
+    /// Skeleton — отображается, пока аватарка загружается.
     private let avatarSkeleton: UIView = {
         let v = UIView()
         v.translatesAutoresizingMaskIntoConstraints = false
@@ -35,6 +44,7 @@ final class PostTableViewCell: UITableViewCell {
         return v
     }()
 
+    /// Заголовок поста.
     private let titleLabel: UILabel = {
         let l = UILabel()
         l.font = UIFont.preferredFont(forTextStyle: .headline)
@@ -43,6 +53,7 @@ final class PostTableViewCell: UITableViewCell {
         return l
     }()
 
+    /// Текст поста.
     private let bodyLabel: UILabel = {
         let l = UILabel()
         l.font = UIFont.preferredFont(forTextStyle: .body)
@@ -51,6 +62,7 @@ final class PostTableViewCell: UITableViewCell {
         return l
     }()
 
+    /// Кнопка лайка (символ + цвет).
     private let likeButton: UIButton = {
         let b = UIButton(type: .system)
         b.translatesAutoresizingMaskIntoConstraints = false
@@ -61,7 +73,10 @@ final class PostTableViewCell: UITableViewCell {
 
     // MARK: - Data
 
+    /// Callback — сообщает во ViewController о нажатии лайка.
     var onLikeTapped: (() -> Void)?
+
+    /// Защита от race condition — нужен для предотвращения мигания аватаров при переиспользовании ячеек.
     private var currentPostId: Int?
 
     // MARK: - Init
@@ -75,6 +90,9 @@ final class PostTableViewCell: UITableViewCell {
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     // MARK: - Prepare For Reuse
+
+    /// Важно! Ячейка переиспользуется — нужно сбросить состояние,
+    /// иначе будет мигать контент от предыдущего поста.
     override func prepareForReuse() {
         super.prepareForReuse()
         currentPostId = nil
@@ -83,8 +101,9 @@ final class PostTableViewCell: UITableViewCell {
         avatarSkeleton.layer.sublayers?.forEach { $0.removeFromSuperlayer() }
     }
 
-    // MARK: - Setup UI
+    // MARK: - Setup UI Layout
 
+    /// Настройка UI и AutoLayout.
     private func setupViews() {
         contentView.addSubview(cardView)
         cardView.addSubview(avatarImageView)
@@ -94,13 +113,11 @@ final class PostTableViewCell: UITableViewCell {
         cardView.addSubview(likeButton)
 
         NSLayoutConstraint.activate([
-            // cardView
             cardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
             cardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12),
             cardView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
             cardView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -6),
 
-            // avatar
             avatarImageView.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 16),
             avatarImageView.topAnchor.constraint(equalTo: cardView.topAnchor, constant: 12),
             avatarImageView.widthAnchor.constraint(equalToConstant: 56),
@@ -111,22 +128,19 @@ final class PostTableViewCell: UITableViewCell {
             avatarSkeleton.widthAnchor.constraint(equalTo: avatarImageView.widthAnchor),
             avatarSkeleton.heightAnchor.constraint(equalTo: avatarImageView.heightAnchor),
 
-            // titleLabel
             titleLabel.leadingAnchor.constraint(equalTo: avatarImageView.trailingAnchor, constant: 12),
             titleLabel.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -16),
             titleLabel.topAnchor.constraint(equalTo: avatarImageView.topAnchor),
 
-            // bodyLabel
             bodyLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
             bodyLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
             bodyLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
 
-            // likeButton
             likeButton.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
             likeButton.topAnchor.constraint(equalTo: bodyLabel.bottomAnchor, constant: 8),
             likeButton.widthAnchor.constraint(equalToConstant: 28),
             likeButton.heightAnchor.constraint(equalToConstant: 28),
-            likeButton.bottomAnchor.constraint(equalTo: cardView.bottomAnchor, constant: -12) 
+            likeButton.bottomAnchor.constraint(equalTo: cardView.bottomAnchor, constant: -12)
         ])
 
         likeButton.addTarget(self, action: #selector(likeTapped), for: .touchUpInside)
@@ -134,6 +148,10 @@ final class PostTableViewCell: UITableViewCell {
 
     // MARK: - Configure
 
+    /// Настройка ячейки данными поста.
+    /// Важные моменты:
+    /// - currentPostId защищает картинку от "мигания"
+    /// - skeleton запускается, пока грузим аватарку
     func configure(with post: Post, liked: Bool) {
         currentPostId = post.id
 
@@ -145,18 +163,19 @@ final class PostTableViewCell: UITableViewCell {
         avatarSkeleton.isHidden = false
         startSkeleton()
 
-        if let url = post.avatarURL {
-            
-            let expectedId = post.id
+        // Без этого аватарка начнёт "прыгать" при скролле
+        let expectedId = post.id
 
+        if let url = post.avatarURL {
             ImageLoader.shared.load(url: url) { [weak self] image in
                 guard let self = self else { return }
 
-                // важно! иначе будет мигать
+                // Фильтр: картинка должна принадлежать текущей ячейке.
                 guard self.currentPostId == expectedId else { return }
 
                 DispatchQueue.main.async {
                     self.stopSkeleton()
+
                     UIView.transition(with: self.avatarImageView,
                                       duration: 0.25,
                                       options: .transitionCrossDissolve) {
@@ -167,11 +186,15 @@ final class PostTableViewCell: UITableViewCell {
         }
     }
 
+    /// Установка визуального состояния лайка.
     func setLikedState(_ liked: Bool) {
         likeButton.setTitle(liked ? "♥︎" : "♡", for: .normal)
         likeButton.setTitleColor(liked ? .systemRed : .label, for: .normal)
     }
 
+    // MARK: - Like Button Handler
+
+    /// Анимация лайка — небольшое увеличение кнопки.
     @objc private func likeTapped() {
         UIView.animate(withDuration: 0.12, animations: {
             self.likeButton.transform = CGAffineTransform(scaleX: 1.3, y: 1.3)
@@ -181,13 +204,12 @@ final class PostTableViewCell: UITableViewCell {
             }
         })
 
-        if currentPostId != nil {
-            onLikeTapped?()
-        }
+        onLikeTapped?()
     }
 
-    // MARK: - Skeleton
+    // MARK: - Skeleton Loading
 
+    /// Создаёт shimmer-анимацию на месте аватарки.
     private func startSkeleton() {
         avatarSkeleton.layer.sublayers?.forEach { $0.removeFromSuperlayer() }
         avatarSkeleton.isHidden = false
@@ -213,6 +235,7 @@ final class PostTableViewCell: UITableViewCell {
         avatarSkeleton.layer.addSublayer(shimmer)
     }
 
+    /// Удаляет skeleton и показывает результат загрузки.
     private func stopSkeleton() {
         avatarSkeleton.isHidden = true
         avatarSkeleton.layer.sublayers?.forEach { $0.removeFromSuperlayer() }

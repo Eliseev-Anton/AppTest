@@ -1,38 +1,54 @@
 import UIKit
 
+/// Контроллер ленты отвечает только за:
+/// - отображение UI
+/// - подписку на события ViewModel
+/// - управление таблицей
+///
+/// Вся логика вынесена во ViewModel (MVVM).
 final class FeedViewController: UIViewController {
 
     private let tableView = UITableView(frame: .zero, style: .plain)
     private let refreshControl = UIRefreshControl()
-    private let viewModel = FeedViewModel()
-    var onDataUpdated: (() -> Void)?
-    var onLikeChanged: ((Int) -> Void)?
 
-        private var likedSet = Set<Int>()
+    /// ViewModel с бизнес-логикой.
+    private let viewModel = FeedViewModel()
+
+    /// Локальный кэш лайков (часть UI-логики).
+    private var likedSet = Set<Int>()
 
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "Feed"
         view.backgroundColor = .systemBackground
+
         setupTableView()
         bindViewModel()
+
+        // Сначала показываем оффлайн-кэш
         viewModel.fetchPosts(remote: false)
-        // fetch remote in background
+
+        // Потом подгружаем свежие данные
         viewModel.fetchPosts(remote: true)
     }
 
     private func setupTableView() {
         tableView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(tableView)
+
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
-        tableView.register(PostTableViewCell.self, forCellReuseIdentifier: PostTableViewCell.reuseId)
+
+        tableView.register(PostTableViewCell.self,
+                           forCellReuseIdentifier: PostTableViewCell.reuseId)
+
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 140
+
         tableView.dataSource = self
         tableView.delegate = self
 
@@ -40,6 +56,7 @@ final class FeedViewController: UIViewController {
         tableView.refreshControl = refreshControl
     }
 
+    /// Подписываемся на события ViewModel (однонаправленный поток данных).
     private func bindViewModel() {
         viewModel.onDataUpdated = { [weak self] in
             DispatchQueue.main.async {
@@ -51,69 +68,62 @@ final class FeedViewController: UIViewController {
         viewModel.onError = { [weak self] error in
             DispatchQueue.main.async {
                 self?.refreshControl.endRefreshing()
-                let alert = UIAlertController(title: "Error", message: error.localizedDescription, preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "OK", style: .default))
-                self?.present(alert, animated: true)
+                self?.showError(error)
             }
         }
 
-        viewModel.onLoadingStateChanged = { isLoading in
-            DispatchQueue.main.async {
-                UIApplication.shared.isNetworkActivityIndicatorVisible = isLoading
-            }
-        }
     }
 
     @objc private func pulledToRefresh() {
         viewModel.refresh()
     }
-    
 
-        func isLiked(postId: Int) -> Bool {
-            likedSet.contains(postId)
-        }
-
-        func toggleLike(postId: Int) {
-            if likedSet.contains(postId) {
-                likedSet.remove(postId)
-            } else {
-                likedSet.insert(postId)
-            }
-
-          
-            onLikeChanged?(postId)
-        }
+    private func showError(_ error: Error) {
+        let alert = UIAlertController(title: "Error", message: error.localizedDescription, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
 }
-
-// MARK: - TableView DataSource & Delegate
+// MARK: - TableView
 extension FeedViewController: UITableViewDataSource, UITableViewDelegate {
+
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         viewModel.visiblePosts.count
     }
 
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: PostTableViewCell.reuseId, for: indexPath) as? PostTableViewCell else {
+    func tableView(_ tableView: UITableView,
+                   cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+
+        guard let cell = tableView.dequeueReusableCell(
+            withIdentifier: PostTableViewCell.reuseId,
+            for: indexPath
+        ) as? PostTableViewCell else {
             return UITableViewCell()
         }
+
         let post = viewModel.visiblePosts[indexPath.row]
+
+        // Передаем актуальное состояние лайка
         cell.configure(with: post, liked: viewModel.isLiked(postId: post.id))
+
+        // Обработка лайка
         cell.onLikeTapped = { [weak self] in
             guard let self else { return }
 
             self.viewModel.toggleLike(postId: post.id)
 
+            // Обновляем только одну ячейку, без reloadData — предотвращает мигание
             if let row = self.viewModel.visiblePosts.firstIndex(where: { $0.id == post.id }) {
-                let indexPath = IndexPath(row: row, section: 0)
-                if let cell = self.tableView.cellForRow(at: indexPath) as? PostTableViewCell {
+                let path = IndexPath(row: row, section: 0)
+                if let visibleCell = self.tableView.cellForRow(at: path) as? PostTableViewCell {
                     let liked = self.viewModel.isLiked(postId: post.id)
-                    cell.setLikedState(liked)
+                    visibleCell.setLikedState(liked)
                 }
             }
         }
 
-        // pagination trigger
+        // Триггер пагинации
         viewModel.loadMoreIfNeeded(currentIndex: indexPath.row)
-
         return cell
     }
 }
