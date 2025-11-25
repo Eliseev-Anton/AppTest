@@ -5,6 +5,10 @@ final class FeedViewController: UIViewController {
     private let tableView = UITableView(frame: .zero, style: .plain)
     private let refreshControl = UIRefreshControl()
     private let viewModel = FeedViewModel()
+    var onDataUpdated: (() -> Void)?
+    var onLikeChanged: ((Int) -> Void)? // новый callback
+
+        private var likedSet = Set<Int>()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -63,6 +67,22 @@ final class FeedViewController: UIViewController {
     @objc private func pulledToRefresh() {
         viewModel.refresh()
     }
+    
+
+        func isLiked(postId: Int) -> Bool {
+            likedSet.contains(postId)
+        }
+
+        func toggleLike(postId: Int) {
+            if likedSet.contains(postId) {
+                likedSet.remove(postId)
+            } else {
+                likedSet.insert(postId)
+            }
+
+            // НЕ вызываем onDataUpdated() — это бы триггерило reloadData()
+            onLikeChanged?(postId)
+        }
 }
 
 // MARK: - TableView DataSource & Delegate
@@ -78,7 +98,17 @@ extension FeedViewController: UITableViewDataSource, UITableViewDelegate {
         let post = viewModel.visiblePosts[indexPath.row]
         cell.configure(with: post, liked: viewModel.isLiked(postId: post.id))
         cell.onLikeTapped = { [weak self] in
-            self?.viewModel.toggleLike(postId: post.id)
+            guard let self else { return }
+
+            self.viewModel.toggleLike(postId: post.id)
+
+            if let row = self.viewModel.visiblePosts.firstIndex(where: { $0.id == post.id }) {
+                let indexPath = IndexPath(row: row, section: 0)
+                if let cell = self.tableView.cellForRow(at: indexPath) as? PostTableViewCell {
+                    let liked = self.viewModel.isLiked(postId: post.id)
+                    cell.setLikedState(liked)
+                }
+            }
         }
 
         // pagination trigger

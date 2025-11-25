@@ -92,7 +92,6 @@ final class FeedViewModel {
             if let ent = res.first {
                 ent.liked.toggle()
                 try ctx.save()
-                onDataUpdated?()
             }
         } catch {
             print("toggleLike error: \(error)")
