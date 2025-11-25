@@ -40,7 +40,7 @@ final class FeedViewModel {
                     self.allPosts = posts.sorted { $0.id < $1.id }
                     // save to CoreData
                     CoreDataStack.shared.upsertPosts(posts) {
-                        self.loadFromCache() // reload using CoreData entities to preserve likes
+                        self.loadFromCache()
                     }
                 case .failure(let error):
                     self.onError?(error)
@@ -56,8 +56,7 @@ final class FeedViewModel {
 
     private func loadFromCache() {
         let entities = CoreDataStack.shared.fetchSavedPosts()
-        // map to Post while preserving liked state in separate map
-        // But we expose only Post for UI; liked state fetched from entities when needed
+        
         self.allPosts = entities.map { Post(userId: Int($0.userId), id: Int($0.id), title: $0.title ?? "", body: $0.body ?? "") }
         self.visiblePosts = Array(allPosts.prefix(pageSize))
         onDataUpdated?()

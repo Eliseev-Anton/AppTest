@@ -30,7 +30,7 @@ final class CoreDataStack {
         }
     }
     
-    // --- Helper: save posts ---
+ 
     func upsertPosts(_ posts: [Post], completion: (() -> Void)? = nil) {
         let ctx = viewContext
         ctx.perform {

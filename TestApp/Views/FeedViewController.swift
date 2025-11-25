@@ -6,7 +6,7 @@ final class FeedViewController: UIViewController {
     private let refreshControl = UIRefreshControl()
     private let viewModel = FeedViewModel()
     var onDataUpdated: (() -> Void)?
-    var onLikeChanged: ((Int) -> Void)? // новый callback
+    var onLikeChanged: ((Int) -> Void)?
 
         private var likedSet = Set<Int>()
 
@@ -80,7 +80,7 @@ final class FeedViewController: UIViewController {
                 likedSet.insert(postId)
             }
 
-            // НЕ вызываем onDataUpdated() — это бы триггерило reloadData()
+          
             onLikeChanged?(postId)
         }
 }
