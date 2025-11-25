@@ -146,7 +146,7 @@ final class PostTableViewCell: UITableViewCell {
         startSkeleton()
 
         if let url = post.avatarURL {
-
+            
             let expectedId = post.id
 
             ImageLoader.shared.load(url: url) { [weak self] image in

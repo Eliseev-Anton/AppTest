@@ -44,6 +44,11 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		B82ECACA2ED607FA001EDA47 /* Screenshots */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Screenshots;
+			sourceTree = "<group>";
+		};
 		B879EF082ED5B3C500134FE6 /* TestApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -93,6 +98,7 @@
 		B879EEFD2ED5B3C500134FE6 = {
 			isa = PBXGroup;
 			children = (
+				B82ECACA2ED607FA001EDA47 /* Screenshots */,
 				B879EF082ED5B3C500134FE6 /* TestApp */,
 				B879EF222ED5B3C600134FE6 /* TestAppTests */,
 				B879EF2C2ED5B3C600134FE6 /* TestAppUITests */,
@@ -134,6 +140,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
+				B82ECACA2ED607FA001EDA47 /* Screenshots */,
 				B879EF082ED5B3C500134FE6 /* TestApp */,
 			);
 			name = TestApp;

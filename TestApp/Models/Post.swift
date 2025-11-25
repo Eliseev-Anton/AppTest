@@ -7,6 +7,6 @@ struct Post: Codable, Sendable {
     let body: String
 
     var avatarURL: URL? {
-        URL(string: "https://i.pravatar.cc/150?img=\(userId % 70 + 1)")
+      URL(string: "https://i.pravatar.cc/150?u=\(self.id)")
     }
 }
