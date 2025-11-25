@@ -8,6 +8,8 @@
 
 ## Скриншот
 Гланый экран приложения:
+
+
 <img src="Screenshots/main_screen.png" alt="Главный экран" width="400">
 
 > Скриншоты расположены в папке `screenshots` проекта.
