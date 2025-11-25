@@ -1,5 +1,4 @@
-# TestAppA
-
+# TestApp
 ## Архитектура
 Проект реализован с использованием паттерна **MVVM (Model-View-ViewModel)**.  
 - **Model** — описывает данные приложения (Post, User).  
@@ -14,7 +13,7 @@
 
 Нажатие на кнопку "лайк": 
 
-<img src="Screenshots/like_post.png" alt="Лайк поста" width="300">
+<img src="Screenshots/likes.png" alt="Лайк поста" width="300">
 > Скриншоты расположены в папке `screenshots` проекта.
 
 ## Используемые технологии
