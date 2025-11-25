@@ -9,9 +9,12 @@
 ## Скриншот
 Гланый экран приложения:
 
-
 <img src="Screenshots/main_screen.png" alt="Главный экран" width="400">
 
+
+Нажатие на кнопку "лайк": 
+
+<img src="Screenshots/like_post.png" alt="Лайк поста" width="300">
 > Скриншоты расположены в папке `screenshots` проекта.
 
 ## Используемые технологии
