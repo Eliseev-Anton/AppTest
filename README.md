@@ -26,12 +26,17 @@
 
 ## Инструкция по сборке
 1. Клонировать репозиторий:
-```bash
-git clone git@github.com:Eliseev-Anton/apptest.git
+  ```bash
+  git clone git@github.com:Eliseev-Anton/apptest.git TestApp
+```
 2.Перейти в папку проекта:
+```bash
 cd TestApp
+```
 3.Открыть проект в Xcode:
+```bash
 open TestApp.xcodeproj
+```
 4.Выбрать симулятор или устройство
 5.Собрать проект: Cmd + B
 6.Запустить приложение: Cmd + R
