@@ -8,7 +8,7 @@
 ## Скриншот
 Гланый экран приложения:
 
-<img src="Screenshots/main_screen.png" alt="Главный экран" width="400">
+<img src="Screenshots/main_screen.png" alt="Главный экран" width="300">
 
 
 Нажатие на кнопку "лайк": 
