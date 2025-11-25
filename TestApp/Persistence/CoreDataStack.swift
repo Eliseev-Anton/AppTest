@@ -6,7 +6,7 @@ final class CoreDataStack {
     private init() {}
     
     lazy var container: NSPersistentContainer = {
-        let container = NSPersistentContainer(name: "SocialFeedApp")
+        let container = NSPersistentContainer(name: "TestApp")
         container.loadPersistentStores { storeDescription, error in
             if let error = error as NSError? {
                 fatalError("Unresolved error \(error), \(error.userInfo)")
