@@ -7,7 +7,7 @@
 - **ViewModel** — логика получения данных, обработка и передача в View.
 
 ## Скриншот
-![Главный экран](screenshots/main_screen.png)  
+![Главный экран](Screenshots/main_screem.png)  
 
 > Скриншоты расположены в папке `screenshots` проекта.
 
